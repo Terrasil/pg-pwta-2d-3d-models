@@ -1,40 +1,35 @@
 package pl.pg.pwta.pwta2d3dmodels.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AddCircle
 import androidx.compose.material.icons.rounded.Info
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import pl.pg.pwta.pwta2d3dmodels.model.ModelInfo
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import android.net.Uri
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.platform.LocalContext
-import pl.pg.pwta.pwta2d3dmodels.model.ModelFormat
-import pl.pg.pwta.pwta2d3dmodels.util.readModelInfoFromUri
+import androidx.compose.ui.unit.dp
+import pl.pg.pwta.pwta2d3dmodels.model.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
-    var selectedModel by remember { mutableStateOf<ModelInfo?>(null) }
+    var selectedAsset by remember { mutableStateOf<AssetInfo?>(null) }
     var showInfoDialog by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
-
     val openFileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            selectedModel = readModelInfoFromUri(context, uri)
+            selectedAsset = loadAsset(context, uri)
         }
     }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -42,22 +37,14 @@ fun MainScreen() {
                 actions = {
                     IconButton(
                         onClick = { showInfoDialog = true },
-                        enabled = selectedModel != null
+                        enabled = selectedAsset != null
                     ) {
-                        Icon(
-                            Icons.Rounded.Info,
-                            contentDescription = "Informacje o pliku"
-                        )
+                        Icon(Icons.Rounded.Info, contentDescription = "Informacje o pliku")
                     }
                     IconButton(
-                        onClick = {
-                            openFileLauncher.launch(arrayOf("*/*"))
-                        }
+                        onClick = { openFileLauncher.launch(arrayOf("*/*")) }
                     ) {
-                        Icon(
-                            Icons.Rounded.AddCircle,
-                            contentDescription = "Otwórz plik"
-                        )
+                        Icon(Icons.Rounded.AddCircle, contentDescription = "Otwórz plik")
                     }
                 }
             )
@@ -72,15 +59,14 @@ fun MainScreen() {
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
-                model = selectedModel
+                asset = selectedAsset
             )
-            StatusBar(model = selectedModel)
+            StatusBar(asset = selectedAsset)
         }
     }
-
-    if (showInfoDialog && selectedModel != null) {
-        ModelInfoDialog(
-            model = selectedModel!!,
+    if (showInfoDialog && selectedAsset != null) {
+        AssetInfoDialog(
+            asset = selectedAsset!!,
             onDismiss = { showInfoDialog = false }
         )
     }
@@ -89,112 +75,58 @@ fun MainScreen() {
 @Composable
 fun RenderSurface(
     modifier: Modifier,
-    model: ModelInfo?
+    asset: AssetInfo?
 ) {
-    fun ModelFormat.isRenderable3D(): Boolean =
-        this in setOf(
-            ModelFormat.OBJ,
-            ModelFormat.GLTF,
-            ModelFormat.GLB,
-            ModelFormat.STL
-        )
     Surface(modifier = modifier) {
-        when {
-
-            else -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Nie załadowano modelu")
+        when (asset) {
+            null -> Box(
+                Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Nie załadowano pliku")
             }
-//            model == null -> {
-//                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-//                    Text("Nie załadowano modelu")
-//                }
-//            }
-//
-//            model.format in setOf(ModelFormat.GLTF, ModelFormat.GLB, ModelFormat.OBJ) -> {
-//                Render3DSceneView(model)
-//            }
-//
-//            model.format == ModelFormat.STL -> {
-//                RenderSTL(model)
-//            }
-//
-//            model.format.isRenderable2D() -> {
-//                Render2D(model)
-//            }
-//
-//            else -> {
-//                UnsupportedFormatView(model.format)
-//            }
+            is ImageAsset -> {
+                Render2D(asset)
+            }
+            is Model3DAsset -> {
+                Render3D(asset)
+            }
         }
+    }
+}
+@Composable
+fun Render2D(asset: ImageAsset) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Obraz 2D: ${asset.base.fileName}")
     }
 }
 
 @Composable
-fun OpenModelDialog(
-    onDismiss: () -> Unit,
-    onModelSelected: (ModelInfo) -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Wybierz model") },
-        text = {
-            // TODO:
-            // - lista modeli z assets
-            // - lub picker systemowy (SAF)
-            Text("Lista predefiniowanych modeli (TODO)")
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Zamknij")
-            }
-        }
-    )
+fun Render3D(asset: Model3DAsset) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Model 3D: ${asset.base.fileName}")
+    }
 }
 
 @Composable
-fun ModelInfoDialog(
-    model: ModelInfo,
+fun AssetInfoDialog(
+    asset: AssetInfo,
     onDismiss: () -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Informacje o pliku") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Nazwa pliku: ${model.fileName}")
-                Text("Ścieżka / URI: ${model.filePath}")
-                Text("Rozszerzenie: ${model.extension}")
-                Text("Format: ${model.format}")
-                HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                Text("Rozmiar: ${model.fileSizeBytes} B")
-                Text(
-                    "Typ MIME: ${
-                        model.mimeType ?: "brak danych"
-                    }"
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                Text(
-                    "Data utworzenia: ${
-                        model.createdAt?.toString() ?: "brak danych"
-                    }"
-                )
-                Text(
-                    "Data modyfikacji: ${
-                        model.modifiedAt?.toString() ?: "brak danych"
-                    }"
-                )
-                Text(
-                    "Ostatni dostęp: ${
-                        model.accessedAt?.toString() ?: "brak danych"
-                    }"
-                )
-                HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
-                Text("Źródło: ${if (model.isEmbedded) "assets aplikacji" else "zewnętrzny plik"}")
-                Text(
-                    "Uprawnienia: " +
-                            "${if (model.isReadable) "R" else "-"}" +
-                            "${if (model.isWritable) "W" else "-"}"
-                )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                when (asset) {
+                    is ImageAsset -> ImageInfoContent(asset)
+                    is Model3DAsset -> Model3DInfoContent(asset)
+                }
             }
         },
         confirmButton = {
@@ -206,7 +138,116 @@ fun ModelInfoDialog(
 }
 
 @Composable
-fun StatusBar(model: ModelInfo?) {
+fun BaseInfoContent(base: ModelInfo) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Nazwa pliku: ${base.fileName}")
+        Text("Ścieżka / URI: ${base.filePath}")
+        Text("Format: ${base.format}")
+        Text("Rozszerzenie: ${base.extension}")
+        HorizontalDivider()
+        Text("Rozmiar: ${base.fileSizeBytes} B")
+        Text("Typ MIME: ${base.mimeType ?: "—"}")
+        HorizontalDivider()
+        Text("Data utworzenia: ${base.createdAt ?: "—"}")
+        Text("Data modyfikacji: ${base.modifiedAt ?: "—"}")
+        Text("Ostatni dostęp: ${base.accessedAt ?: "—"}")
+        HorizontalDivider()
+        Text("Źródło: ${if (base.isEmbedded) "assets aplikacji" else "plik zewnętrzny"}")
+        Text(
+            "Uprawnienia: " +
+                    (if (base.isReadable) "R" else "-") +
+                    (if (base.isWritable) "W" else "-")
+        )
+    }
+}
+
+@Composable
+fun ImageInfoContent(asset: ImageAsset) {
+    val base = asset.base
+    val img = asset.imageInfo
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Informacje o pliku", style = MaterialTheme.typography.titleSmall)
+        BaseInfoContent(base)
+        HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp))
+        Text("Geometria obrazu", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Wektorowy: ${if (img.isVector) "tak" else "nie"}")
+            Text("Szerokość: ${img.widthPx ?: "—"} px")
+            Text("Wysokość: ${img.heightPx ?: "—"} px")
+            Text("ViewBox szerokość: ${img.viewBoxWidth ?: "—"}")
+            Text("ViewBox wysokość: ${img.viewBoxHeight ?: "—"}")
+            Text("Proporcje: ${img.aspectRatio ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("Właściwości obrazu", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Kanał alfa: ${img.hasAlpha ?: "—"}")
+            Text("Model koloru: ${img.colorModel ?: "—"}")
+            Text("Głębia koloru: ${img.bitDepthPerChannel ?: "—"} bpc")
+            Text("DPI X: ${img.dpiX ?: "—"}")
+            Text("DPI Y: ${img.dpiY ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("EXIF – czas", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Data: ${img.exifDateTime ?: "—"}")
+            Text("Data oryginalna: ${img.exifDateTimeOriginal ?: "—"}")
+            Text("Data digitalizacji: ${img.exifDateTimeDigitized ?: "—"}")
+            Text("Subsekundy: ${img.subSecTime ?: "—"}")
+            Text("Orientacja: ${img.exifOrientation ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("EXIF – aparat / obiektyw", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Producent: ${img.cameraMake ?: "—"}")
+            Text("Model: ${img.cameraModel ?: "—"}")
+            Text("Oprogramowanie: ${img.software ?: "—"}")
+            Text("Producent obiektywu: ${img.lensMake ?: "—"}")
+            Text("Model obiektywu: ${img.lensModel ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("EXIF – ekspozycja", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Czas ekspozycji: ${img.exposureTime ?: "—"} s")
+            Text("Przysłona (f): ${img.fNumber ?: "—"}")
+            Text("ISO: ${img.isoSpeed ?: "—"}")
+            Text("Ogniskowa: ${img.focalLength ?: "—"} mm")
+            Text("Korekta ekspozycji: ${img.exposureBias ?: "—"} EV")
+            Text("Tryb pomiaru: ${img.meteringMode ?: "—"}")
+            Text("Balans bieli: ${img.whiteBalance ?: "—"}")
+            Text("Lampa błyskowa: ${img.flash ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("EXIF – obraz", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Jasność: ${img.brightnessValue ?: "—"}")
+            Text("Kontrast: ${img.contrast ?: "—"}")
+            Text("Nasycenie: ${img.saturation ?: "—"}")
+            Text("Ostrość: ${img.sharpness ?: "—"}")
+        }
+        HorizontalDivider()
+        Text("EXIF – lokalizacja", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Zawiera GPS: ${if (img.hasGpsMetadata == true) "tak" else "nie"}")
+            Text("Szerokość geograficzna: ${img.gpsLatitude ?: "—"}")
+            Text("Długość geograficzna: ${img.gpsLongitude ?: "—"}")
+            Text("Wysokość: ${img.gpsAltitude ?: "—"}")
+            Text("Czas GPS: ${img.gpsTimestamp ?: "—"}")
+        }
+    }
+}
+
+
+@Composable
+fun Model3DInfoContent(asset: Model3DAsset) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Informacje o pliku", style = MaterialTheme.typography.titleSmall)
+        BaseInfoContent(asset.base)
+    }
+}
+
+@Composable
+fun StatusBar(asset: AssetInfo?) {
     Surface(tonalElevation = 2.dp) {
         Row(
             modifier = Modifier
@@ -214,7 +255,7 @@ fun StatusBar(model: ModelInfo?) {
                 .padding(8.dp)
         ) {
             Text(
-                text = model?.fileName ?: "Brak załadowanego modelu",
+                text = asset?.base?.fileName ?: "Brak załadowanego pliku",
                 style = MaterialTheme.typography.bodySmall
             )
         }

@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.runtime)
     implementation(libs.common)
     implementation(libs.protolite.well.known.types)
+    implementation(libs.androidx.exifinterface)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -62,4 +63,6 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    implementation("androidx.exifinterface:exifinterface:1.4.2")
+    implementation("com.caverock:androidsvg:1.4")
 }

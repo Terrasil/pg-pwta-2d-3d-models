@@ -13,6 +13,7 @@ core = "1.17.1"
 runtime = "1.10.0"
 common = "18.11.0"
 protoliteWellKnownTypes = "18.0.1"
+exifinterface = "1.4.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -34,6 +35,7 @@ core = { group = "com.google.ar.sceneform", name = "core", version.ref = "core" 
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 common = { group = "com.google.mlkit", name = "common", version.ref = "common" }
 protolite-well-known-types = { group = "com.google.firebase", name = "protolite-well-known-types", version.ref = "protoliteWellKnownTypes" }
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

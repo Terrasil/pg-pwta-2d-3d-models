@@ -17,3 +17,22 @@ data class ModelInfo(
     val isReadable: Boolean,
     val isWritable: Boolean
 )
+
+enum class ModelFormat {
+    // 2D
+    PNG,
+    JPEG,
+    SVG,
+    WEBP,
+
+    // 3D – Filament
+    OBJ,
+    GLTF,
+    GLB,
+
+    // 3D – Optional
+    STL,
+    PLY,
+
+    UNKNOWN
+}
