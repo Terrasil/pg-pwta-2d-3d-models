@@ -51,7 +51,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.ui)
-    implementation(libs.core)
     implementation(libs.androidx.compose.runtime)
     implementation(libs.common)
     implementation(libs.protolite.well.known.types)
@@ -66,4 +65,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation("androidx.exifinterface:exifinterface:1.4.2")
     implementation("com.caverock:androidsvg:1.4")
+    implementation("io.github.sceneview:sceneview:2.2.1")
 }

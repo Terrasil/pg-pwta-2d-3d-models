@@ -24,6 +24,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.runtime.Composable
+import io.github.sceneview.SceneView
+import io.github.sceneview.node.ModelNode
+import io.github.sceneview.math.Position
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,10 +158,38 @@ fun Render2D(asset: ImageAsset) {
 }
 
 @Composable
-fun Render3D(asset: Model3DAsset) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Model 3D: ${asset.base.fileName}")
+fun Render3D(
+    asset: Model3DAsset,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val sceneView = remember {
+        SceneView(context)
     }
+    DisposableEffect(asset.base.uri) {
+        val uri = Uri.parse(asset.base.uri!!)
+        val modelFile = copyUriToCacheFile(
+            context = context,
+            uri = uri,
+            fileName = asset.base.fileName
+        )
+        val modelInstance = sceneView.modelLoader
+            .createModelInstance(modelFile)
+        val modelNode = ModelNode(
+            modelInstance = modelInstance,
+            scaleToUnits = 1.0f,
+            centerOrigin = Position(0f, -1f, 0f)
+        )
+        sceneView.addChildNode(modelNode)
+        onDispose {
+            sceneView.removeChildNode(modelNode)
+            modelNode.destroy()
+        }
+    }
+    AndroidView(
+        modifier = modifier,
+        factory = { sceneView }
+    )
 }
 
 @Composable

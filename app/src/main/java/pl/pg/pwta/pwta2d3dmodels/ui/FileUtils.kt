@@ -20,6 +20,7 @@ import java.util.*
 import com.caverock.androidsvg.SVG
 import pl.pg.pwta.pwta2d3dmodels.model.ImageColorModel
 import pl.pg.pwta.pwta2d3dmodels.model.ImageInfo
+import java.io.File
 
 fun loadAsset(
     context: Context,
@@ -321,4 +322,18 @@ fun loadSvgBitmap(
     val canvas = Canvas(bitmap)
     canvas.drawPicture(picture)
     return bitmap.asImageBitmap()
+}
+
+fun copyUriToCacheFile(
+    context: Context,
+    uri: Uri,
+    fileName: String
+): File {
+    val outFile = File(context.cacheDir, fileName)
+    context.contentResolver.openInputStream(uri)!!.use { input ->
+        outFile.outputStream().use { output ->
+            input.copyTo(output)
+        }
+    }
+    return outFile
 }
