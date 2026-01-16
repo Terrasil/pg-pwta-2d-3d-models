@@ -49,9 +49,11 @@ fun MainScreen() {
     // Lista predefinowanych modeli
     val predefinedModels = listOf(
         "models/2d_image.jpg",
-        "models/2d_vector.svg",
-        "models/2d_image.png",
+        "models/2d_house.svg",
+        "models/2d_house.png",
         "models/3d_cube.glb",
+        "models/3d_house.glb",
+        "models/3d_house.gltf",
     )
 
     Scaffold(
